@@ -25,15 +25,11 @@ class App extends React.Component<{}, State> {
   };
 
   handleUserMove = (from: number, to: number) => {
-    console.log(`Move from ${from} to ${to}`);
-
-    const validMoves = this.state.board.getLegalRollsFrom(from, true);
+    const validMoves = this.state.board.getLegalRollsFrom(from);
 
     if (validMoves.includes(to)) {
       this.state.board.roll(from, to);
       this.setState({ board: this.state.board });
-
-      console.log('Move executed');
     }
 
   };
