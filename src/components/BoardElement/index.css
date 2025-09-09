@@ -1,7 +1,11 @@
 .board {
     position: relative;
     z-index: 4;
-
+    width: min(95vw, 95vh * 9 / 8);
+    /* Maintain 9:8 aspect ratio and fit within viewport */
+    aspect-ratio: 9 / 8;
+    max-width: 900px; /* sensible cap on large screens */
+    /* height auto due to aspect-ratio */
 }
 
 .squares,
@@ -9,6 +13,8 @@
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    height: 100%;
 }
 
 .square-masks {
@@ -16,6 +22,8 @@
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 

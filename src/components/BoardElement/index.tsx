@@ -1,8 +1,8 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useLayoutEffect } from "react";
 import type Move from "../../engine/Move";
 import type Board from "../../engine/Board";
 import { Piece } from "../../engine/constants";
-import { squareLength, initialColours } from "./constants";
+import { initialColours } from "./constants";
 import DieElement from "./Dice/DieElement";
 import "./index.css";
 
@@ -27,6 +27,34 @@ function pieceTranslation(isDragging: boolean, dragX: number, dragY: number, col
 const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mouseY, legalSquares, onDragStart, onDragEnd }) => {
     const [draggingPieceIndex, setDraggingPieceIndex] = useState<number | null>(null);
     const boardRef = useRef<HTMLDivElement>(null);
+    const [squareLength, setSquareLength] = useState<number>(100);
+
+    // Keep square size in sync with rendered board size for responsiveness
+    useLayoutEffect(() => {
+        const el = boardRef.current;
+        if (!el) return;
+
+        const updateSize = () => {
+            const rect = el.getBoundingClientRect();
+            // Board has 9 columns; derive square size from width
+            const newSquare = rect.width / 9;
+            if (newSquare > 0) setSquareLength(newSquare);
+        };
+
+        updateSize();
+
+        // Observe size changes
+        const ro = new ResizeObserver(() => updateSize());
+        ro.observe(el);
+        // Also update on orientation changes
+        window.addEventListener('orientationchange', updateSize);
+        window.addEventListener('resize', updateSize);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener('orientationchange', updateSize);
+            window.removeEventListener('resize', updateSize);
+        };
+    }, []);
 
     const getDraggingPieceOffsets = (mouseX: number, mouseY: number, draggingPieceIndex: number | null) => {
         if (draggingPieceIndex !== null && boardRef.current) {
@@ -129,7 +157,8 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
             top: 0,
             left: 0,
             cursor: 'pointer',
-        };            pieces.push(
+        };
+            pieces.push(
                 <DieElement
                     piece={piece}
                     style={pieceStyles}
@@ -142,7 +171,7 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
     }
 
     return (
-        <div className="board" ref={boardRef} style={{ width: 9 * squareLength, height: 8 * squareLength }}>
+        <div className="board" ref={boardRef}>
             <div className="squares" draggable="false">
                 {squares}
             </div>

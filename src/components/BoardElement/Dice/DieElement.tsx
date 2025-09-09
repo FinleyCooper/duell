@@ -29,7 +29,7 @@ const DieElement: React.FC<DieProps> = ({ piece, style, onMouseDown, onMouseMove
 
     return (
         <div style={style} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
-            <svg viewBox="-300 -300 600 600">
+            <svg viewBox="-300 -300 600 600" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                 <rect x="-250" y="-250" width="500" height="500" rx="50" style={{ fill: colour, stroke: colour === "white" ? "#28252c" : "white", strokeWidth: 8 }}/>
                 {pips.map(([cx, cy], i) => {
                     const isCenterPip = cx === 0 && cy === 0;

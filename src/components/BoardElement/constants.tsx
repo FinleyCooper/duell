@@ -7,8 +7,6 @@ interface BoardCustomisation {
     lastMoveSource: string
 }
 
-export const squareLength: number = 100 // Pixels
-
 export const initialColours: BoardCustomisation = {
     lightSquares: "#f0d9b5",
     darkSquares: "#b58863",
