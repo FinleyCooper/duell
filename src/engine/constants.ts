@@ -6,6 +6,10 @@ export const Directions = {
     RIGHT: 3
 } as const;
 
+export const Squares = {
+    NULL: 255
+}
+
 export const Piece = {
     EMPTY: 0b0000000,
     ONE: 0b0000001,

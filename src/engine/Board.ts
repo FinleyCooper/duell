@@ -1,15 +1,18 @@
 import type { BasePiece } from "./Pieces";
 import { Empty } from "./Pieces";
-import { Piece } from "./constants";
+import { Piece, Squares } from "./constants";
 import Move from "./Move";
 import { StartingBoard } from "./BoardSetup";
 
 class Board {
     private sideToMove: number;
     private square: Array<BasePiece>;
+
+    // Variables for handling the rolling which makes up an individual move
     private isBetweenMoves: boolean = false;
     private rollCount: number = 0;
-    private pieceBeingMoved: number | null = null; // Position of the current piece being moved. Null if not isBetweenMoves.
+    private rollHistory: Uint8Array = new Uint8Array(7).fill(Squares.NULL);
+    private pieceBeingMovedStartTopFace: number = 0;
 
     constructor() {
         this.sideToMove = Piece.WHITE;
@@ -34,7 +37,7 @@ class Board {
         const legalRolls: number[] = [];
         const piece = this.square[square];
 
-        if (piece.isEmpty() || piece.getColour() !== this.sideToMove || (this.isBetweenMoves && this.pieceBeingMoved !== square)) {
+        if (piece.isEmpty() || piece.getColour() !== this.sideToMove || (this.isBetweenMoves && this.getMovingPiecePosition() !== square)) {
             return legalRolls;
         }
 
@@ -59,7 +62,7 @@ class Board {
                 if (targetPiece.isEmpty()) {
                     legalRolls.push(targetSquare);
                 } else if (targetPiece.getColour() !== piece.getColour()) {
-                    if (piece.getTopFace() === Piece.ONE || this.rollCount === 1) {
+                    if ((!this.isBetweenMoves && piece.getTopFace() === Piece.ONE) || this.rollCount === 1) {
                         legalRolls.push(targetSquare);
                     }
                 }
@@ -75,9 +78,11 @@ class Board {
         if (!this.isBetweenMoves) {
             this.isBetweenMoves = true;
             this.rollCount = piece.getTopFace();
+            this.rollHistory[0] = from;
+            this.pieceBeingMovedStartTopFace = piece.getTopFace();
         }
 
-        this.pieceBeingMoved = to;
+        this.rollHistory[this.pieceBeingMovedStartTopFace + 1 - this.rollCount] = to;
 
         const offset = (to - from) * (piece.getColour() === Piece.WHITE ? 1 : -1);
         const direction = offset === 9 ? 2 : offset === -9 ? 0 : offset === 1 ? 3 : 1;
@@ -91,8 +96,18 @@ class Board {
         if (this.rollCount == 0) {
             this.isBetweenMoves = false;
             this.sideToMove = this.sideToMove === Piece.WHITE ? Piece.BLACK : Piece.WHITE;
-            this.pieceBeingMoved = null;
+            this.pieceBeingMovedStartTopFace = 0;
+            this.rollHistory = new Uint8Array(7).fill(Squares.NULL);
         }
+    }
+
+    private getMovingPiecePosition(): number {
+        if (!this.isBetweenMoves) {
+            return Squares.NULL;
+        }
+        
+        const rollsCompleted = this.pieceBeingMovedStartTopFace - this.rollCount;
+        return this.rollHistory[rollsCompleted];
     }
 }
 
