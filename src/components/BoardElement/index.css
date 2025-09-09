@@ -6,6 +6,10 @@
     aspect-ratio: 9 / 8;
     max-width: 900px; /* sensible cap on large screens */
     /* height auto due to aspect-ratio */
+    touch-action: none; /* allow custom touch drag without scrolling */
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .squares,

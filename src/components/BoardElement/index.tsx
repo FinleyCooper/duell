@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useLayoutEffect } from "react";
+import React, { useState, useRef, useMemo, useLayoutEffect, useCallback } from "react";
 import type Move from "../../engine/Move";
 import type Board from "../../engine/Board";
 import { Piece } from "../../engine/constants";
@@ -91,6 +91,42 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
         onDragEnd();
     };
 
+    // Touch support: rely on App updating mouseX/mouseY via onTouchMove
+    const handleTouchStart = useCallback((event: React.TouchEvent, index: number) => {
+        event.preventDefault();
+        setDraggingPieceIndex(index);
+        onDragStart(index);
+    }, [onDragStart]);
+
+    const handleTouchMove = useCallback((event: React.TouchEvent) => {
+        if (draggingPieceIndex === null) return;
+        // prevent page scroll while dragging; App updates coordinates
+        event.preventDefault();
+    }, [draggingPieceIndex]);
+
+    const handleTouchEnd = useCallback((event?: React.TouchEvent<HTMLDivElement | HTMLDivElement>) => {
+        if (event) event.preventDefault();
+        if (draggingPieceIndex === null) return;
+        const boardEl = boardRef.current;
+        const changed = event?.changedTouches?.[0];
+        if (boardEl && changed) {
+            const rect = boardEl.getBoundingClientRect();
+            const xOffset: number = Math.min(Math.max(changed.clientX - rect.x, 0), rect.width);
+            const yOffset: number = Math.min(Math.max(changed.clientY - rect.y, 0), rect.height);
+            const localX: number = xOffset / squareLength - 0.5;
+            const localY: number = yOffset / squareLength - 0.5;
+            const col = Math.round(localX);
+            const row = Math.round(localY);
+            const newIndex = (ROWS - 1 - row) * COLUMNS + col;
+            onUserAttemptsMove(draggingPieceIndex, newIndex);
+            setDraggingPieceIndex(null);
+            onDragEnd();
+            return;
+        }
+        // Fallback
+        handleMouseUp();
+    }, [draggingPieceIndex, squareLength, onUserAttemptsMove, onDragEnd, handleMouseUp]);
+
     const squares: React.JSX.Element[] = [];
     const pieces: React.JSX.Element[] = [];
     const masks: React.JSX.Element[] = [];
@@ -158,20 +194,23 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
             left: 0,
             cursor: 'pointer',
         };
-            pieces.push(
+        pieces.push(
                 <DieElement
                     piece={piece}
                     style={pieceStyles}
                     key={invertedIndex}
                     onMouseDown={(event: React.MouseEvent) => handleMouseDown(event, invertedIndex)}
                     onMouseUp={handleMouseUp}
+            onTouchStart={(event: React.TouchEvent) => handleTouchStart(event, invertedIndex)}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
                 />
             );
         }
     }
 
     return (
-        <div className="board" ref={boardRef}>
+    <div className="board" ref={boardRef} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
             <div className="squares" draggable="false">
                 {squares}
             </div>

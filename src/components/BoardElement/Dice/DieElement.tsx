@@ -8,6 +8,9 @@ interface DieProps {
     onMouseDown?: (event: React.MouseEvent) => void;
     onMouseMove?: (event: React.MouseEvent) => void;
     onMouseUp?: () => void;
+    onTouchStart?: (event: React.TouchEvent) => void;
+    onTouchMove?: (event: React.TouchEvent) => void;
+    onTouchEnd?: () => void;
 }
 
 const pipPositions: { [key: number]: number[][] } = {
@@ -21,14 +24,22 @@ const pipPositions: { [key: number]: number[][] } = {
 
 const keyPips: number[][] = [[0, 0], [0, -100], [0, 100], [-100, 0], [100, 0]];
 
-const DieElement: React.FC<DieProps> = ({ piece, style, onMouseDown, onMouseMove, onMouseUp }) => {
+const DieElement: React.FC<DieProps> = ({ piece, style, onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd }) => {
     const colour: string = piece.getColour() === Piece.WHITE ? "white" : "#28252c";
     const topFace = piece.getTopFace();
     const isKey = piece.isKeyPiece();
     const pips = isKey ? keyPips : (pipPositions[topFace] || []);
 
     return (
-        <div style={style} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
+        <div
+            style={style}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
+            onMouseMove={onMouseMove}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
             <svg viewBox="-300 -300 600 600" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                 <rect x="-250" y="-250" width="500" height="500" rx="50" style={{ fill: colour, stroke: colour === "white" ? "#28252c" : "white", strokeWidth: 8 }}/>
                 {pips.map(([cx, cy], i) => {

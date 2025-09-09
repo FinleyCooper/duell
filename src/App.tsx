@@ -17,6 +17,19 @@ const App: React.FC = () => {
     setMousePos({ x: event.clientX, y: event.clientY });
   };
 
+  // Touch tracking mirrors mouse so BoardElement math continues to work
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    setMousePos({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const handleTouchMove = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    setMousePos({ x: touch.clientX, y: touch.clientY });
+  };
+
   // Check for game end
   const checkForGameEnd = () => {
     let winner = engine.board.hasSideWon();
@@ -77,7 +90,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="App" onMouseMove={handleMouseMove}>
+  <div className="App" onMouseMove={handleMouseMove} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
       <div className="header">
         <div className="title">Duell <span>by Finley Cooper</span></div>
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
