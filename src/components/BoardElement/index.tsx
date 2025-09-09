@@ -12,6 +12,9 @@ interface Props {
     mouseX: number;
     mouseY: number;
     lastMove: Move | null;
+    legalSquares: number[];
+    onDragStart: (square: number) => void;
+    onDragEnd: () => void;
 }
 
 function pieceTranslation(isDragging: boolean, dragX: number, dragY: number, col: number, row: number) {
@@ -21,7 +24,7 @@ function pieceTranslation(isDragging: boolean, dragX: number, dragY: number, col
     return `translate(${col * 100}%, ${row * 100}%)`;
 }
 
-const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mouseY }) => {
+const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mouseY, legalSquares, onDragStart, onDragEnd }) => {
     const [draggingPieceIndex, setDraggingPieceIndex] = useState<number | null>(null);
     const boardRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +47,7 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
 
     const handleMouseDown = (_: React.MouseEvent, index: number) => {
         setDraggingPieceIndex(index);
+        onDragStart(index);
     };
 
     const handleMouseUp = () => {
@@ -56,6 +60,7 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
 
         onUserAttemptsMove(draggingPieceIndex, newIndex);
         setDraggingPieceIndex(null);
+        onDragEnd();
     };
 
     const squares: React.JSX.Element[] = [];
@@ -71,7 +76,11 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
         const col: number = i % 9;
         const invertedIndex = (ROWS - 1 - row) * COLUMNS + col;
 
-        const colour: string = (row + col) % 2 === 0 ? initialColours.darkSquares : initialColours.lightSquares;
+        let colour: string = (row + col) % 2 === 0 ? initialColours.darkSquares : initialColours.lightSquares;
+
+        if (legalSquares.includes(invertedIndex)) {
+            colour = '#ff0000';
+        }
 
         const squareStyles: React.CSSProperties = {
             backgroundColor: colour,

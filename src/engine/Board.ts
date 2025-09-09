@@ -1,6 +1,6 @@
 import type { BasePiece } from "./Pieces";
 import { Empty } from "./Pieces";
-import { Piece, Squares } from "./constants";
+import { Piece } from "./constants";
 import Move from "./Move";
 import { StartingBoard } from "./BoardSetup";
 
@@ -10,9 +10,8 @@ class Board {
 
     // Variables for handling the rolling which makes up an individual move
     private isBetweenMoves: boolean = false;
-    private rollCount: number = 0;
-    private rollHistory: Uint8Array = new Uint8Array(7).fill(Squares.NULL);
-    private pieceBeingMovedStartTopFace: number = 0;
+    private legalMovesList : Move[] = [];
+    private rollsCompleted: number = 0;
 
     constructor() {
         this.sideToMove = Piece.WHITE;
@@ -27,62 +26,79 @@ class Board {
         return this.square;
     }
 
-    generateLegalMoves(): Move[] {
+    generateLegalMovesFrom(square: number): Move[] {
         const legalMoves: Move[] = [];
-        
-        return legalMoves;
-    }
-
-    getLegalRollsFrom(square: number): number[] {
-        const legalRolls: number[] = [];
         const piece = this.square[square];
 
-        if (piece.isEmpty() || piece.getColour() !== this.sideToMove || (this.isBetweenMoves && this.getMovingPiecePosition() !== square)) {
-            return legalRolls;
+        if (piece.isEmpty() || piece.getColour() !== this.sideToMove) {
+            return legalMoves;
         }
 
+        const rolls = piece.getTopFace();
+
         const directions = [
-            { row: -1, col: 0 }, 
+            { row: -1, col: 0 },
             { row: 1, col: 0 },
             { row: 0, col: -1 },
             { row: 0, col: 1 }
         ];
 
-        const fromRow = Math.floor(square / 9);
-        const fromCol = square % 9;
+        const findPaths = (currentSquare: number, rollsRemaining: number, path: number[], lastDirection: { row: number, col: number } | null, hasTurned: boolean) => {
+            if (rollsRemaining === 0) {
+                const isCapture = !this.square[currentSquare].isEmpty() && this.square[currentSquare].getColour() !== this.sideToMove;
+                legalMoves.push(new Move(square, currentSquare, path, isCapture));
+                return;
+            }
 
-        for (const dir of directions) {
-            const toRow = fromRow + dir.row;
-            const toCol = fromCol + dir.col;
+            for (const dir of directions) {
+                if (hasTurned && lastDirection && dir !== lastDirection) {
+                    continue;
+                }
 
-            if (toRow >= 0 && toRow < 8 && toCol >= 0 && toCol < 9) {
-                const targetSquare = toRow * 9 + toCol;
-                const targetPiece = this.square[targetSquare];
+                const currentRow = Math.floor(currentSquare / 9);
+                const currentCol = currentSquare % 9;
+                const nextRow = currentRow + dir.row;
+                const nextCol = currentCol + dir.col;
 
-                if (targetPiece.isEmpty()) {
-                    legalRolls.push(targetSquare);
-                } else if (targetPiece.getColour() !== piece.getColour()) {
-                    if ((!this.isBetweenMoves && piece.getTopFace() === Piece.ONE) || this.rollCount === 1) {
-                        legalRolls.push(targetSquare);
+                if (nextRow >= 0 && nextRow < 8 && nextCol >= 0 && nextCol < 9) {
+                    const nextSquare = nextRow * 9 + nextCol;
+                    const nextPiece = this.square[nextSquare];
+                    const isFinalRoll = rollsRemaining === 1;
+
+                    const canMoveTo = (nextPiece.isEmpty() || (isFinalRoll && nextPiece.getColour() !== this.sideToMove)) && !path.includes(nextSquare);
+
+                    if (canMoveTo) {
+                        const newPath = [...path, nextSquare];
+                        const turned = hasTurned || (lastDirection !== null && lastDirection !== dir);
+                        findPaths(nextSquare, rollsRemaining - 1, newPath, dir, turned);
                     }
                 }
             }
+        };
+
+        findPaths(square, rolls, [square], null, false);
+
+        return legalMoves;
+    }
+
+    getLegalSquares(square: number): number[] {
+        if (!this.isBetweenMoves) {
+            return this.generateLegalMovesFrom(square).map(move => move.path[1]);
+        }
+        if (square == this.legalMovesList[0].path[this.rollsCompleted]) {
+            return this.legalMovesList.map(move => move.path[this.rollsCompleted + 1]);
         }
 
-        return legalRolls;
+        return []
     }
 
     roll(from: number, to: number): void {
         const piece = this.square[from];
 
         if (!this.isBetweenMoves) {
+            this.legalMovesList = this.generateLegalMovesFrom(from);
             this.isBetweenMoves = true;
-            this.rollCount = piece.getTopFace();
-            this.rollHistory[0] = from;
-            this.pieceBeingMovedStartTopFace = piece.getTopFace();
         }
-
-        this.rollHistory[this.pieceBeingMovedStartTopFace + 1 - this.rollCount] = to;
 
         const offset = (to - from) * (piece.getColour() === Piece.WHITE ? 1 : -1);
         const direction = offset === 9 ? 2 : offset === -9 ? 0 : offset === 1 ? 3 : 1;
@@ -90,25 +106,18 @@ class Board {
 
         this.square[to] = piece;
         this.square[from] = new Empty()
+        
+        this.legalMovesList = this.legalMovesList.filter(move => move.path[this.rollsCompleted + 1] === to);
 
-        this.rollCount--;
+        this.rollsCompleted++;
 
-        if (this.rollCount == 0) {
+        if (this.rollsCompleted === this.legalMovesList[0].path.length - 1) {
             this.isBetweenMoves = false;
             this.sideToMove = this.sideToMove === Piece.WHITE ? Piece.BLACK : Piece.WHITE;
-            this.pieceBeingMovedStartTopFace = 0;
-            this.rollHistory = new Uint8Array(7).fill(Squares.NULL);
+            this.rollsCompleted = 0;
         }
     }
 
-    private getMovingPiecePosition(): number {
-        if (!this.isBetweenMoves) {
-            return Squares.NULL;
-        }
-        
-        const rollsCompleted = this.pieceBeingMovedStartTopFace - this.rollCount;
-        return this.rollHistory[rollsCompleted];
-    }
 }
 
 export default Board
