@@ -106,6 +106,7 @@ body::before {
     color: white;
     background-color: #39343f;
     font-family: 'Zilla Slab', serif;
+    z-index: 3;
 }
 
 .popup-content > h3 {
