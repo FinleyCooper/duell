@@ -2,7 +2,7 @@ import type { BasePiece } from "./Pieces";
 import { Empty, Die, Key } from "./Pieces";
 import { Piece } from "./constants";
 import Move from "./Move";
-import { startingBoard } from "./BoardSetup";
+
 class Board {
     private sideToMove: number;
     private square: BasePiece[];
