@@ -65,6 +65,7 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
 
     const squares: React.JSX.Element[] = [];
     const pieces: React.JSX.Element[] = [];
+    const masks: React.JSX.Element[] = [];
 
     const boardState = board.getBoard();
 
@@ -76,11 +77,7 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
         const col: number = i % 9;
         const invertedIndex = (ROWS - 1 - row) * COLUMNS + col;
 
-        let colour: string = (row + col) % 2 === 0 ? initialColours.darkSquares : initialColours.lightSquares;
-
-        if (legalSquares.includes(invertedIndex)) {
-            colour = '#ff0000';
-        }
+        const colour: string = (row + col) % 2 === 0 ? initialColours.darkSquares : initialColours.lightSquares;
 
         const squareStyles: React.CSSProperties = {
             backgroundColor: colour,
@@ -94,6 +91,21 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
             <div key={invertedIndex} className="square" style={squareStyles}>
             </div>
         );
+
+        if (legalSquares.includes(invertedIndex)) {
+            const maskStyles: React.CSSProperties = {
+                backgroundColor: 'rgba(80, 32, 192, 0.5)',
+                width: squareLength,
+                height: squareLength,
+                gridRowStart: row + 1,
+                gridColumnStart: col + 1,
+            };
+
+            masks.push(
+                <div key={`mask-${invertedIndex}`} className="square-mask" style={maskStyles}>
+                </div>
+            );
+        }
 
         const piece = boardState[invertedIndex];
         if (piece.datum !== Piece.EMPTY) {
@@ -123,6 +135,9 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
         <div className="board" ref={boardRef} style={{ width: 9 * squareLength, height: 8 * squareLength }}>
             <div className="squares" draggable="false">
                 {squares}
+            </div>
+            <div className="square-masks" draggable="false">
+                {masks}
             </div>
             {pieces}
         </div>
