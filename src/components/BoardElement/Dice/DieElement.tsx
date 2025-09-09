@@ -19,11 +19,13 @@ const pipPositions: { [key: number]: number[][] } = {
     6: [[-150, -150], [-150, 0], [-150, 150], [150, -150], [150, 0], [150, 150]],
 };
 
+const keyPips: number[][] = [[0, 0], [0, -100], [0, 100], [-100, 0], [100, 0]];
+
 const DieElement: React.FC<DieProps> = ({ piece, style, onMouseDown, onMouseMove, onMouseUp }) => {
     const colour: string = piece.getColour() === Piece.WHITE ? "white" : "black";
     const topFace = piece.getTopFace();
-    const pips = pipPositions[topFace] || [];
     const isKey = piece.isKeyPiece();
+    const pips = isKey ? keyPips : (pipPositions[topFace] || []);
 
     return (
         <div style={style} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseMove={onMouseMove}>
@@ -31,8 +33,9 @@ const DieElement: React.FC<DieProps> = ({ piece, style, onMouseDown, onMouseMove
                 <rect x="-250" y="-250" width="500" height="500" rx="50" style={{ fill: colour, stroke: colour === "white" ? "black" : "white", strokeWidth: 8 }}/>
                 {pips.map(([cx, cy], i) => {
                     const isCenterPip = cx === 0 && cy === 0;
-                    const pipColour = isKey && isCenterPip ? "orange" : (colour === "white" ? "black" : "white");
-                    return <circle key={i} cx={cx} cy={cy} r={40} style={{ fill: pipColour }} />
+                    const pipColour = colour === "white" ? "black" : "white";
+                    const pipRadius = isKey ? (isCenterPip ? 50 : 20) : 40;
+                    return <circle key={i} cx={cx} cy={cy} r={pipRadius} style={{ fill: pipColour }} />
                 })}
             </svg>
         </div>
