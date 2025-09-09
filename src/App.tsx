@@ -28,7 +28,6 @@ const App: React.FC = () => {
   };
 
   const resetGame = () => {
-    console.log("play again");
     setEngine(new Engine());
     setWinner(null);
     setLegalSquares([]);
@@ -114,7 +113,12 @@ const App: React.FC = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       />
+        <footer className="footer">
+                <a href="https://github.com/finleycooper/duell" target="_blank" className="footer-link">GitHub</a>
+                <a href="https://finleycooper.co.uk" target="_blank" className="footer-link">Main Site</a>
+        </footer>
     </div>
+    
   );
 };
 

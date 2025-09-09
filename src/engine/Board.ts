@@ -16,7 +16,7 @@ class Board {
 
     constructor() {
         this.sideToMove = Piece.WHITE;
-        this.square = StartingBoard;
+        this.square = [...StartingBoard];
     }
 
     getSideToMove(): number {

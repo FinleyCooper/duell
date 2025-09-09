@@ -1,5 +1,7 @@
 .board {
     position: relative;
+    z-index: 4;
+
 }
 
 .squares,
@@ -10,7 +12,7 @@
 }
 
 .square-masks {
-    z-index: 2;
+    z-index: 5;
     position: absolute;
     top: 0;
     left: 0;
