@@ -6,7 +6,8 @@ import { StartingBoard } from "./BoardSetup";
 
 class Board {
     private sideToMove: number;
-    private square: Array<BasePiece>;
+    private square: BasePiece[];
+    private piecesCapturedPreviously: BasePiece[] = []; // For unplaying engine search moves in a stack
 
     // Variables for handling the rolling which makes up an individual move
     private betweenMoves: boolean = false;
@@ -126,6 +127,47 @@ class Board {
         }
     }
 
+    hasSideWon(): number {
+        // Winning by capturing the opponent's key piece or moving your key piece to the opponent's starting square
+        const whiteKeyCaptured = !this.square.some(piece => piece.getColour() === Piece.WHITE && piece.isKeyPiece());
+        const blackKeyCaptured = !this.square.some(piece => piece.getColour() === Piece.BLACK && piece.isKeyPiece());
+        const whiteKeyInBlackStart = this.square[67].getColour() === Piece.WHITE && this.square[67].isKeyPiece();
+        const blackKeyInWhiteStart = this.square[4].getColour() === Piece.BLACK && this.square[4].isKeyPiece();
+        if (whiteKeyCaptured || whiteKeyInBlackStart) return Piece.BLACK;
+        if (blackKeyCaptured || blackKeyInWhiteStart) return Piece.WHITE;
+        return 0;
+    }
+
+    playMove(move: Move): void {
+        const piece = this.square[move.sourceSquare];
+
+        for (let i = 0; i < move.path.length - 1; i++) {
+            const offset = (move.path[i + 1] -  move.path[i]) * (piece.getColour() === Piece.WHITE ? 1 : -1);
+            const direction = offset === 9 ? 2 : offset === -9 ? 0 : offset === 1 ? 3 : 1;
+            piece.roll(direction);
+        }
+
+
+        this.piecesCapturedPreviously.push(this.square[move.destinationSquare]);
+        this.square[move.destinationSquare] = piece;
+
+        this.square[move.sourceSquare] = new Empty();
+        this.sideToMove = this.sideToMove === Piece.WHITE ? Piece.BLACK : Piece.WHITE;
+    }
+
+    unplayMove(move: Move): void {
+        const piece = this.square[move.destinationSquare];
+        for (let i = move.path.length - 1; i > 0; i--) {
+            const offset = (move.path[i - 1] -  move.path[i]) * (piece.getColour() === Piece.WHITE ? 1 : -1);
+            const direction = offset === 9 ? 2 : offset === -9 ? 0 : offset === 1 ? 3 : 1;
+            piece.roll(direction);
+        }
+
+        this.square[move.sourceSquare] = piece;
+        this.square[move.destinationSquare] = this.piecesCapturedPreviously.pop() || new Empty();
+
+        this.sideToMove = this.sideToMove === Piece.WHITE ? Piece.BLACK : Piece.WHITE;
+    }
 }
 
 export default Board

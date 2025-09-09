@@ -79,8 +79,19 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
 
         const colour: string = (row + col) % 2 === 0 ? initialColours.darkSquares : initialColours.lightSquares;
 
+        let adjustedColour = colour;
+        if (invertedIndex === 4 || invertedIndex === 67) {
+            if ((row + col) % 2 === 0) {
+                // Dark square, make darker
+                adjustedColour = "#75553cff";
+            } else {
+                // Light square, make lighter
+                adjustedColour = "#bdb2a5ff";
+            }
+        }
+
         const squareStyles: React.CSSProperties = {
-            backgroundColor: colour,
+            backgroundColor: adjustedColour,
             width: squareLength,
             height: squareLength,
             gridRowStart: row + 1,

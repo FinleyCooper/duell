@@ -10,7 +10,7 @@ class Engine {
     }
 
     getBestMove() : Move {
-        return Search(this.board, this.board.generateLegalMoves());
+        return Search(this.board, 4);
     }
 }
 
