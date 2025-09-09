@@ -120,17 +120,16 @@ const BoardElement: React.FC<Props> = ({ board, onUserAttemptsMove, mouseX, mous
 
         const piece = boardState[invertedIndex];
         if (piece.datum !== Piece.EMPTY) {
-            const pieceStyles: React.CSSProperties = {
-                zIndex: invertedIndex === draggingPieceIndex ? 10 : 5,
-                transform: pieceTranslation(invertedIndex === draggingPieceIndex, draggingPieceX, draggingPieceY, col, row),
-                width: squareLength,
-                height: squareLength,
-                position: "absolute",
-                top: 0,
-                left: 0,
-            };
-
-            pieces.push(
+        const pieceStyles: React.CSSProperties = {
+            zIndex: invertedIndex === draggingPieceIndex ? 10 : 5,
+            transform: pieceTranslation(invertedIndex === draggingPieceIndex, draggingPieceX, draggingPieceY, col, row),
+            width: squareLength,
+            height: squareLength,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            cursor: 'pointer',
+        };            pieces.push(
                 <DieElement
                     piece={piece}
                     style={pieceStyles}
