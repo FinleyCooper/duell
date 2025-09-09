@@ -9,7 +9,7 @@ class Board {
     private square: Array<BasePiece>;
 
     // Variables for handling the rolling which makes up an individual move
-    private isBetweenMoves: boolean = false;
+    private betweenMoves: boolean = false;
     private legalMovesList : Move[] = [];
     private rollsCompleted: number = 0;
 
@@ -25,6 +25,10 @@ class Board {
     getBoard(): Array<BasePiece> {
         return this.square;
     }
+
+    isBetweenMoves(): boolean {
+        return this.betweenMoves;
+    }   
 
     generateLegalMovesFrom(square: number): Move[] {
         const legalMoves: Move[] = [];
@@ -81,8 +85,12 @@ class Board {
         return legalMoves;
     }
 
+    generateLegalMoves(): Move[] {
+        return this.square.flatMap((_, index) => this.generateLegalMovesFrom(index));
+    }
+
     getLegalSquares(square: number): number[] {
-        if (!this.isBetweenMoves) {
+        if (!this.betweenMoves) {
             return this.generateLegalMovesFrom(square).map(move => move.path[1]);
         }
         if (square == this.legalMovesList[0].path[this.rollsCompleted]) {
@@ -95,9 +103,9 @@ class Board {
     roll(from: number, to: number): void {
         const piece = this.square[from];
 
-        if (!this.isBetweenMoves) {
+        if (!this.betweenMoves) {
             this.legalMovesList = this.generateLegalMovesFrom(from);
-            this.isBetweenMoves = true;
+            this.betweenMoves = true;
         }
 
         const offset = (to - from) * (piece.getColour() === Piece.WHITE ? 1 : -1);
@@ -112,7 +120,7 @@ class Board {
         this.rollsCompleted++;
 
         if (this.rollsCompleted === this.legalMovesList[0].path.length - 1) {
-            this.isBetweenMoves = false;
+            this.betweenMoves = false;
             this.sideToMove = this.sideToMove === Piece.WHITE ? Piece.BLACK : Piece.WHITE;
             this.rollsCompleted = 0;
         }

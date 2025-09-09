@@ -1,32 +1,47 @@
 import React, { useState, useCallback } from 'react';
-import Board from './engine/Board';
+import Engine from './engine';
 import BoardElement from './components/BoardElement';
+import { Piece } from './engine/constants';
 
 import './App.css';
 
 const App: React.FC = () => {
-  const [board] = useState(() => new Board());
-  const [boardVersion, setBoardVersion] = useState(0);
+  const [engine] = useState(() => new Engine());
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [legalSquares, setLegalSquares] = useState<number[]>([]);
+  const [_boardVersion, setBoardVersion] = useState(0); // State to force re-render
 
   const handleMouseMove = useCallback((event: React.MouseEvent) => {
     setMousePos({ x: event.clientX, y: event.clientY });
   }, []);
 
   const handleUserMove = useCallback((from: number, to: number) => {
-    const validMoves = board.getLegalSquares(from);
+    if (engine.board.getSideToMove() === Piece.BLACK) return;
+    const validMoves = engine.board.getLegalSquares(from);
 
     if (validMoves.includes(to)) {
-      board.roll(from, to);
-      setBoardVersion(v => v + 1);
+      engine.board.roll(from, to);
+      setBoardVersion(prev => prev + 1);
+
+      if (!engine.board.isBetweenMoves()) {
+        const bestMove = engine.getBestMove();
+        bestMove.path.forEach((_, idx) => {
+          setTimeout(() => {
+            if (idx < bestMove.path.length - 1) {
+              engine.board.roll(bestMove.path[idx], bestMove.path[idx + 1]);
+              setBoardVersion(prev => prev + 1);
+            }
+          }, idx * 300);
+        });
+      }
     }
+
     setLegalSquares([]);
-  }, [board]);
+  }, [engine]);
 
   const handleDragStart = useCallback((square: number) => {
-    setLegalSquares(board.getLegalSquares(square));
-  }, [board]);
+    setLegalSquares(engine.board.getLegalSquares(square));
+  }, [engine]);
 
   const handleDragEnd = useCallback(() => {
     setLegalSquares([]);
@@ -35,7 +50,7 @@ const App: React.FC = () => {
   return (
     <div className="App" onMouseMove={handleMouseMove}>
       <BoardElement
-        board={board}
+        board={engine.board}
         onUserAttemptsMove={handleUserMove}
         mouseX={mousePos.x}
         mouseY={mousePos.y}
@@ -43,7 +58,6 @@ const App: React.FC = () => {
         legalSquares={legalSquares}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        key={boardVersion}
       />
     </div>
   );
